@@ -38,6 +38,7 @@ dependencies:
   web3dart: ^2.7.3
   web_socket_channel: ^3.0.1
   http: ^1.2.2
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
