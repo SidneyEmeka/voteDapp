@@ -17,7 +17,6 @@ class Sendetherpage extends StatefulWidget {
 
 class _SendetherpageState extends State<Sendetherpage> {
   ///Confetti///
-  bool isPopping = false;
   final confettiController = ConfettiController();
 
   @override
@@ -26,12 +25,18 @@ class _SendetherpageState extends State<Sendetherpage> {
     super.dispose();
   }
 
+  ///Progress Indicator
+  bool isLoading = false;
+
 
   ///On-chain///
   dynamic userBalance;
   dynamic transhash;
 
-  Future<void> sendCrypto() async {
+  Future<void> sendCrypto(String recAddress, dynamic amount) async {
+    setState(() {
+      isLoading=true;
+    });
     String remoteProcedureCallUrl =
         "http://127.0.0.1:7545"; //Ganache remote server
     String webSocketUrl =
@@ -43,15 +48,14 @@ class _SendetherpageState extends State<Sendetherpage> {
             IOWebSocketChannel.connect(webSocketUrl).cast<String>());
 
     //User Details Extraction from  private key
-    String fromPrivateKey = "0xd55cd9a02afecd54975672ce0140cbfc3f7f55b6e8c63d84d96da23bd4ef8884";
+    String fromPrivateKey = "0x01c7f267b2c43570aca55f45b33434c32939074c56cf885f80c22eeeeb90d341";
     Credentials credentials = EthPrivateKey.fromHex(fromPrivateKey);
     EthereumAddress fromAddress = credentials.address;
-    EthereumAddress toAddress =
-        EthereumAddress.fromHex("0x5dE274CfDbd699B3d0F0Fe48E621a716fed63651");
-    EtherAmount amountToSend = EtherAmount.fromInt(EtherUnit.ether, 5);
+    EthereumAddress toAddress = EthereumAddress.fromHex(recAddress);
+    EtherAmount amountToSend = EtherAmount.fromInt(EtherUnit.ether, amount);
+
 
     //Send Ethereum
-
      myClient
          .sendTransaction(
          credentials,
@@ -67,13 +71,17 @@ class _SendetherpageState extends State<Sendetherpage> {
        setState(() {
          userBalance = newBalance
              .getValueInUnit(EtherUnit.ether); //parse and update balance to ui
-         transhash = txHash; //The returned transaction hash from the transaction
+         transhash = txHash;
+         isLoading=false;//The returned transaction hash from the transaction
          confettiController.play();
        });
      }); //always remember to add chain id
 
 
   }
+
+  TextEditingController receiverAddress = TextEditingController();
+  TextEditingController amountToSend = TextEditingController();
 
 
 
@@ -112,21 +120,110 @@ class _SendetherpageState extends State<Sendetherpage> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
+                            Visibility(visible: isLoading,child: LinearProgressIndicator(color: Colors.white,borderRadius: BorderRadius.circular(10),backgroundColor: Colors.deepPurple,)),
                             const Text(
                               "Flutter Dapp",
                               style:
                                   TextStyle(fontSize: 30, color: Colors.white),
                             ),
                             Text(
-                              "ETH Balance ${userBalance ?? ""} ",
+                              "Balance ${userBalance ?? "-"} Eth",
                               style: const TextStyle(
                                   fontSize: 15, color: Colors.white),
                             ),
-                            const Spacer(),
+                            const Spacer(flex: 2,),
+                            //Address
+                            Container(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    "To",
+                                    style:
+                                    TextStyle(fontSize: 10, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 5,),
+                                  TextFormField(
+                                    style: const TextStyle(fontSize: 11,color: Colors.black),
+                                    controller: receiverAddress,
+                                    cursorColor: Colors.deepPurple,
+                                    cursorHeight: 15,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      hintText: "ETH Address",
+                                      focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.white)
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color:Colors.white)
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.white)
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.black12,width: 1)
+                                      ),
+                                    ),
+
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(flex: 1,),
+                            //Amount
+                            Container(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Sending",
+                                    style:
+                                    TextStyle(fontSize: 10, color: Colors.white),
+                                  ),
+                                  const SizedBox(height: 5,),
+                                  TextFormField(
+                                    style: const TextStyle(fontSize: 11,color: Colors.black),
+                                    controller: amountToSend,
+                                    cursorColor: Colors.deepPurple,
+                                    cursorHeight: 15,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      hintText: "Amount",
+                                      focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.white)
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color:Colors.white)
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.white)
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(7),
+                                          borderSide: const BorderSide(color: Colors.black12,width: 1)
+                                      ),
+                                    ),
+
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Spacer(flex: 2,),
                             Visibility(
                               visible: transhash != null,
                               child: Text(
-                                "Transaction Hash $transhash",
+                                "Trx Hash: $transhash",
                                 style: const TextStyle(
                                     fontSize: 15, color: Colors.white),
                               ),
@@ -145,7 +242,9 @@ class _SendetherpageState extends State<Sendetherpage> {
       ),
       floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.deepPurple,
-          onPressed: sendCrypto,
+          onPressed: (){
+            sendCrypto(receiverAddress.text.trim(),num.parse(amountToSend.text.trim()));
+          },
           child: const Icon(
             Icons.send_outlined,
             color: Colors.white,
